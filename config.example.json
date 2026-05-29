@@ -1,0 +1,5 @@
+{
+  "station": "WCP",
+  "api_key": "YOUR_DARWIN_API_KEY_HERE",
+  "rows": 10
+}
