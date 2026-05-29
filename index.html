@@ -3,24 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Next Train // Worcester Park</title>
+  <title>次の電車 // Worcester Park</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@300;400;700&display=swap');
 
     :root {
-      --amber: #ffb300;
-      --dim:   #996800;
-      --dark:  #0d0a00;
-      --panel: #120e00;
-      --red:   #ff3b3b;
-      --green: #00e050;
+      --pink:   #ff2d78;
+      --cyan:   #00f0ff;
+      --purple: #bf5fff;
+      --dark:   #080010;
+      --panel:  #0e0020;
+      --text:   #ffe8ff;
+      --dim:    #5a3a7a;
+      --green:  #00ff99;
+      --red:    #ff3b6b;
+      --amber:  #ffcc44;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       background: var(--dark);
-      color: var(--amber);
+      color: var(--text);
       font-family: 'Share Tech Mono', 'Courier New', monospace;
       min-height: 100vh;
       display: flex;
@@ -28,369 +32,393 @@
       align-items: center;
       justify-content: flex-start;
       padding: 1.5rem 1rem 2rem;
+      overflow-x: hidden;
     }
+
+    #rain   { position: fixed; inset: 0; opacity: 0.07; z-index: 0; }
+    #sakura { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
 
     /* CRT scanlines */
     body::after {
-      content: '';
-      position: fixed; inset: 0;
+      content: ''; position: fixed; inset: 0;
       background: repeating-linear-gradient(
         to bottom,
         transparent 0px, transparent 3px,
-        rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px
+        rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px
       );
-      pointer-events: none; z-index: 999;
-    }
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%);
       pointer-events: none; z-index: 998;
     }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.85) 100%);
+      pointer-events: none; z-index: 997;
+    }
 
+    /* Board container */
     .board {
-      width: min(860px, 98vw);
-      border: 1px solid var(--dim);
-      background: var(--panel);
-      box-shadow: 0 0 30px rgba(255,179,0,0.1);
+      position: relative; z-index: 2;
+      width: min(900px, 98vw);
+      border: 1px solid var(--purple);
+      background: rgba(14,0,32,0.93);
+      box-shadow:
+        0 0 0 1px rgba(191,95,255,0.15),
+        0 0 50px rgba(191,95,255,0.12),
+        0 0 100px rgba(255,45,120,0.06);
     }
 
-    /* Header */
-    .header {
-      background: var(--dim);
-      padding: 0.35rem 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.72rem;
-      color: var(--dark);
-      letter-spacing: 0.06em;
+    /* Decorative corner diamonds */
+    .board::before {
+      content: '◈'; position: absolute; top: -0.85rem; left: 0.6rem;
+      color: var(--pink); font-size: 1.6rem; text-shadow: 0 0 12px var(--pink);
     }
-    .header .title { font-size: 0.85rem; font-weight: bold; }
+    .board::after {
+      content: '◈'; position: absolute; top: -0.85rem; right: 0.6rem;
+      color: var(--cyan); font-size: 1.6rem; text-shadow: 0 0 12px var(--cyan);
+    }
+
+    /* Header bar */
+    .header {
+      background: linear-gradient(90deg,
+        rgba(255,45,120,0.12), rgba(191,95,255,0.14), rgba(0,240,255,0.1));
+      border-bottom: 1px solid rgba(191,95,255,0.4);
+      padding: 0.32rem 1rem;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.7rem; letter-spacing: 0.08em;
+    }
+    .header .title { color: var(--pink); text-shadow: 0 0 10px var(--pink); }
+    .header .right { color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
 
     /* Station banner */
     .station-banner {
-      padding: 0.8rem 1rem 0.6rem;
-      border-bottom: 1px solid #2a2000;
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+      padding: 1rem 1.2rem 0.85rem;
+      border-bottom: 1px solid rgba(191,95,255,0.25);
+      display: flex; justify-content: space-between; align-items: flex-end;
+      flex-wrap: wrap; gap: 0.5rem;
+      background: linear-gradient(180deg, rgba(255,45,120,0.06) 0%, transparent 100%);
     }
-    .station-name {
-      font-size: 1.6rem;
-      letter-spacing: 0.08em;
-      text-shadow: 0 0 16px rgba(255,179,0,0.5);
+    .station-en {
+      font-size: 1.75rem; letter-spacing: 0.1em; color: var(--text);
+      text-shadow: 0 0 24px rgba(255,45,120,0.55), 0 0 50px rgba(255,45,120,0.25);
     }
-    .station-meta {
-      font-size: 0.7rem;
-      color: var(--dim);
+    .station-jp {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.9rem; color: var(--pink); letter-spacing: 0.12em;
+      text-shadow: 0 0 10px var(--pink); margin-top: 0.25rem;
     }
-    .station-meta span { color: var(--amber); }
+    .station-meta { font-size: 0.68rem; color: var(--dim); text-align: right; line-height: 1.7; }
+    .station-meta span { color: var(--purple); }
 
-    /* Poll timer */
+    /* Poll bar */
     .poll-bar {
-      padding: 0.35rem 1rem;
-      font-size: 0.68rem;
-      color: var(--dim);
-      border-bottom: 1px solid #1a1400;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+      padding: 0.38rem 1.2rem; font-size: 0.66rem; color: var(--dim);
+      border-bottom: 1px solid rgba(191,95,255,0.12);
+      display: flex; align-items: center; gap: 0.8rem;
     }
-    .poll-bar .track {
-      flex: 1;
-      height: 3px;
-      background: #1a1400;
-      position: relative;
-    }
-    .poll-bar .fill {
-      height: 100%;
-      background: var(--dim);
-      transition: width 1s linear;
-      box-shadow: 0 0 4px var(--dim);
-    }
-    .poll-bar .fill.active { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+    .poll-bar .label { color: var(--purple); letter-spacing: 0.06em; }
+    .poll-bar .cd    { color: var(--text); min-width: 3.2rem; }
+    .poll-bar .track { flex: 1; height: 2px; background: rgba(191,95,255,0.08); }
+    .poll-bar .fill  { height: 100%; background: var(--dim); transition: width 1s linear; }
+    .poll-bar .fill.active { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
 
-    /* Departures table */
-    .dep-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.82rem;
-    }
-    .dep-table thead tr {
-      background: #1a1400;
-      font-size: 0.65rem;
-      color: var(--dim);
-      letter-spacing: 0.08em;
-    }
-    .dep-table th, .dep-table td {
-      padding: 0.55rem 0.9rem;
+    /* Table */
+    .dep-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .dep-table thead th {
+      padding: 0.5rem 0.9rem; font-weight: normal;
+      color: var(--purple); font-size: 0.64rem; letter-spacing: 0.1em;
+      border-bottom: 1px solid rgba(191,95,255,0.3);
       text-align: left;
-      border-bottom: 1px solid #1a1400;
     }
-    .dep-table th { font-weight: normal; }
-    .dep-table tbody tr:hover { background: rgba(255,179,0,0.04); }
+    .dep-table thead .jp {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.58rem; color: var(--dim); display: block; margin-top: 1px;
+    }
+    .dep-table td { padding: 0.6rem 0.9rem; border-bottom: 1px solid rgba(191,95,255,0.08); }
+    .dep-table tbody tr:hover { background: rgba(191,95,255,0.05); }
+    .dep-table tbody tr.next  { background: rgba(255,45,120,0.07); }
+    .dep-table tbody tr.next td { text-shadow: 0 0 8px rgba(255,45,120,0.3); }
+    .dep-table tbody tr.next td:first-child { border-left: 2px solid var(--pink); }
 
-    /* Status badges */
-    .on-time   { color: var(--green); }
-    .delayed   { color: #ff8800; }
-    .cancelled { color: var(--red); text-decoration: line-through; }
+    .on-time   { color: var(--green); text-shadow: 0 0 8px var(--green); }
+    .delayed   { color: var(--amber); text-shadow: 0 0 8px var(--amber); }
+    .cancelled { color: var(--red);   text-decoration: line-through; }
     .unknown   { color: var(--dim); }
 
+    .status-jp {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.62rem; display: block; margin-top: 2px; opacity: 0.75;
+    }
+
     .platform {
-      display: inline-block;
-      border: 1px solid var(--dim);
-      padding: 0 0.35rem;
-      font-size: 0.75rem;
-      min-width: 2rem;
-      text-align: center;
+      display: inline-block; border: 1px solid var(--purple);
+      padding: 0 0.4rem; min-width: 2.2rem; text-align: center;
+      font-size: 0.76rem; color: var(--purple);
+      box-shadow: 0 0 6px rgba(191,95,255,0.2);
     }
 
-    /* Next train highlight */
-    .dep-table tbody tr.next {
-      background: rgba(255,179,0,0.07);
+    .countdown { font-size: 1.05rem; letter-spacing: 0.04em; color: var(--text); }
+    .countdown.soon {
+      color: var(--pink); text-shadow: 0 0 14px var(--pink);
+      animation: pulse 0.8s ease-in-out infinite;
     }
-    .dep-table tbody tr.next td { color: var(--amber); }
+    .countdown.gone { color: var(--dim); font-size: 0.78rem; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
 
-    /* Countdown badge */
-    .countdown {
-      font-size: 1.1rem;
-      letter-spacing: 0.04em;
-      color: var(--amber);
-      text-shadow: 0 0 12px rgba(255,179,0,0.6);
+    /* Glitch */
+    .glitch { position: relative; display: inline-block; }
+    .glitch.g::before, .glitch.g::after {
+      content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     }
-    .countdown.soon { color: var(--red); text-shadow: 0 0 12px rgba(255,59,59,0.7); }
-    .countdown.gone { color: var(--dim); text-shadow: none; font-size: 0.8rem; }
+    .glitch.g::before { color: var(--pink); animation: g1 0.18s steps(2) forwards; }
+    .glitch.g::after  { color: var(--cyan); animation: g2 0.18s steps(2) forwards; }
+    @keyframes g1 { 0%{clip-path:inset(30% 0 50% 0);transform:translateX(-4px)} 50%{clip-path:inset(60% 0 10% 0);transform:translateX(3px)} 100%{clip-path:inset(0 0 100% 0)} }
+    @keyframes g2 { 0%{clip-path:inset(50% 0 20% 0);transform:translateX(4px)} 50%{clip-path:inset(10% 0 65% 0);transform:translateX(-3px)} 100%{clip-path:inset(0 0 100% 0)} }
 
-    /* Empty / error states */
-    .state-msg {
-      padding: 2.5rem 1rem;
-      text-align: center;
-      color: var(--dim);
-      font-size: 0.85rem;
-      letter-spacing: 0.06em;
-    }
-    .state-msg .big { font-size: 1.2rem; color: var(--amber); margin-bottom: 0.5rem; }
-    .state-msg a { color: var(--amber); }
+    /* State messages */
+    .state-msg { padding: 2.5rem 1rem; text-align: center; font-size: 0.85rem; letter-spacing: 0.06em; color: var(--dim); }
+    .state-msg .big { font-size: 1.2rem; color: var(--pink); text-shadow: 0 0 14px var(--pink); margin-bottom: 0.5rem; }
+    .state-msg a { color: var(--cyan); }
+    .state-msg code { color: var(--purple); }
 
     .footer {
-      padding: 0.4rem 1rem;
-      font-size: 0.6rem;
-      color: #3a2e00;
-      display: flex;
-      justify-content: space-between;
-      border-top: 1px solid #1a1400;
-      letter-spacing: 0.05em;
+      padding: 0.4rem 1.2rem; font-size: 0.6rem; color: var(--dim);
+      border-top: 1px solid rgba(191,95,255,0.12);
+      display: flex; justify-content: space-between; letter-spacing: 0.05em;
     }
+    .footer .jp { font-family: 'Noto Sans JP', sans-serif; color: rgba(255,45,120,0.5); }
 
     .blink { animation: blink 1s step-end infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
+    @keyframes blink { 50%{opacity:0} }
   </style>
 </head>
 <body>
 
+<canvas id="rain"></canvas>
+<canvas id="sakura"></canvas>
+
 <div class="board">
+
   <div class="header">
-    <span class="title">LIVE DEPARTURE BOARD</span>
-    <span id="hdr-clock">--:--:--</span>
+    <span class="title">▸ LIVE DEPARTURE BOARD &nbsp;//&nbsp; 時刻表</span>
+    <span class="right" id="hdr-clock">--:--:--</span>
   </div>
 
   <div class="station-banner">
     <div>
-      <div class="station-name">WORCESTER PARK</div>
-      <div class="station-meta">CRS <span>WCP</span> &nbsp;·&nbsp; South Western Railway</div>
+      <div class="station-en glitch" data-text="WORCESTER PARK">WORCESTER PARK</div>
+      <div class="station-jp">ウスター パーク &nbsp;✦&nbsp; 出発案内</div>
     </div>
-    <div class="station-meta" id="last-updated">Last updated: —</div>
+    <div class="station-meta">
+      CRS <span>WCP</span> &nbsp;·&nbsp; South Western Railway<br>
+      <span id="last-updated">—</span>
+    </div>
   </div>
 
   <div class="poll-bar">
-    <span id="poll-label">Next refresh in <span id="poll-countdown">5:00</span></span>
+    <span class="label">次の更新</span>
+    <span class="cd" id="poll-countdown">5:00</span>
     <div class="track"><div class="fill" id="poll-fill" style="width:100%"></div></div>
     <span id="poll-status">IDLE</span>
   </div>
 
   <div id="board-body">
     <div class="state-msg">
-      <div class="big">AWAITING DATA<span class="blink">_</span></div>
+      <div class="big">データを読み込み中<span class="blink">_</span></div>
       Loading departure board...
     </div>
   </div>
 
   <div class="footer">
-    <span>DATA: NATIONAL RAIL DARWIN / HUXLEY2</span>
-    <span>POLL INTERVAL: 5 MIN</span>
+    <span>NATIONAL RAIL DARWIN / HUXLEY2 &nbsp;·&nbsp; 5 MIN POLL</span>
+    <span class="jp">電車の時刻表 ✦ Worcester Park</span>
   </div>
+
 </div>
 
 <script>
-  const POLL_MS   = 5 * 60 * 1000;   // 5 minutes
-  const SOON_MINS = 3;                // highlight countdown red if ≤ this many minutes
+  const POLL_MS   = 5 * 60 * 1000;
+  const SOON_MINS = 3;
 
-  // ── Clock ─────────────────────────────────────────────────────────────────
-  function pad(n) { return String(n).padStart(2, '0'); }
-  function updateClock() {
-    const n = new Date();
-    document.getElementById('hdr-clock').textContent =
-      `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
-  }
-  setInterval(updateClock, 1000);
-  updateClock();
+  // ── Katakana rain ──────────────────────────────────────────────────────────
+  (function(){
+    const c = document.getElementById('rain');
+    const x = c.getContext('2d');
+    const K = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789';
+    let cols, drops;
+    function init(){ c.width=innerWidth; c.height=innerHeight; cols=Math.floor(c.width/18); drops=Array(cols).fill(1); }
+    function draw(){
+      x.fillStyle='rgba(8,0,16,0.06)'; x.fillRect(0,0,c.width,c.height);
+      x.font='14px monospace';
+      drops.forEach((y,i)=>{
+        x.fillStyle = i%3===0?'#ff2d78':i%3===1?'#bf5fff':'#00f0ff';
+        x.fillText(K[Math.floor(Math.random()*K.length)],i*18,y*18);
+        if(y*18>c.height&&Math.random()>.975) drops[i]=0;
+        drops[i]++;
+      });
+    }
+    init(); addEventListener('resize',init); setInterval(draw,60);
+  })();
 
-  // ── Countdown to next service ──────────────────────────────────────────────
-  function minutesUntil(timeStr) {
-    // timeStr is "HH:MM" in 24-hour format
-    if (!timeStr) return null;
-    const now   = new Date();
-    const [h, m] = timeStr.split(':').map(Number);
-    let svc = new Date(now);
-    svc.setHours(h, m, 0, 0);
-    // If the time is in the past, assume it's tomorrow
-    if (svc < now) svc.setDate(svc.getDate() + 1);
-    return Math.round((svc - now) / 60000);
-  }
+  // ── Sakura petals ──────────────────────────────────────────────────────────
+  (function(){
+    const c = document.getElementById('sakura');
+    const x = c.getContext('2d');
+    let petals = [];
+    const COLORS = ['#ff8fb3','#ffb3cc','#ffc0d4','#ff7aaa','#ffaac5'];
 
-  function fmtCountdown(mins) {
-    if (mins === null) return '—';
-    if (mins <= 0)     return 'NOW';
-    if (mins === 1)    return '1 MIN';
-    return `${mins} MINS`;
+    function init(){
+      c.width=innerWidth; c.height=innerHeight; petals=[];
+      for(let i=0;i<45;i++) petals.push({
+        x: Math.random()*c.width,
+        y: Math.random()*c.height,
+        r: 2.5+Math.random()*3.5,
+        vx:(Math.random()-.4)*.7,
+        vy:.35+Math.random()*.9,
+        rot:Math.random()*Math.PI*2,
+        vrot:(Math.random()-.5)*.04,
+        alpha:.25+Math.random()*.45,
+        col:COLORS[Math.floor(Math.random()*COLORS.length)],
+      });
+    }
+    function draw(){
+      x.clearRect(0,0,c.width,c.height);
+      petals.forEach(p=>{
+        x.save();
+        x.translate(p.x,p.y); x.rotate(p.rot); x.scale(1,.55);
+        x.globalAlpha=p.alpha;
+        x.beginPath(); x.arc(0,0,p.r,0,Math.PI*2);
+        x.fillStyle=p.col; x.fill();
+        x.restore();
+        p.x+=p.vx; p.y+=p.vy; p.rot+=p.vrot;
+        if(p.y>c.height+10){p.y=-10;p.x=Math.random()*c.width;}
+      });
+    }
+    init(); addEventListener('resize',init); setInterval(draw,33);
+  })();
+
+  // ── Glitch ─────────────────────────────────────────────────────────────────
+  const glitchEl = document.querySelector('.glitch');
+  setInterval(()=>{ if(Math.random()<.15){ glitchEl.classList.add('g'); setTimeout(()=>glitchEl.classList.remove('g'),200); } },4000);
+
+  // ── Clock ──────────────────────────────────────────────────────────────────
+  const pad = n => String(n).padStart(2,'0');
+  function tick_clock(){
+    const n=new Date();
+    document.getElementById('hdr-clock').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
   }
+  setInterval(tick_clock,1000); tick_clock();
 
   // ── Poll bar ───────────────────────────────────────────────────────────────
-  let pollTimer = null;
-  let nextPollAt = null;
-
-  function updatePollBar() {
-    if (!nextPollAt) return;
-    const remaining = Math.max(0, nextPollAt - Date.now());
-    const pct = (remaining / POLL_MS) * 100;
-    const secs = Math.ceil(remaining / 1000);
-    const mm = Math.floor(secs / 60), ss = secs % 60;
-    document.getElementById('poll-countdown').textContent = `${mm}:${pad(ss)}`;
-    const fill = document.getElementById('poll-fill');
-    fill.style.width = pct + '%';
-    fill.className = 'fill' + (pct > 10 ? ' active' : '');
+  let nextPollAt=null;
+  function updatePollBar(){
+    if(!nextPollAt)return;
+    const rem=Math.max(0,nextPollAt-Date.now());
+    const s=Math.ceil(rem/1000);
+    document.getElementById('poll-countdown').textContent=`${Math.floor(s/60)}:${pad(s%60)}`;
+    const f=document.getElementById('poll-fill');
+    f.style.width=(rem/POLL_MS*100)+'%';
+    f.className='fill'+(rem/POLL_MS>0.1?' active':'');
   }
-  setInterval(updatePollBar, 1000);
+  setInterval(updatePollBar,1000);
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function minutesUntil(t){
+    if(!t||t==='—')return null;
+    const now=new Date(),[h,m]=t.split(':').map(Number);
+    let d=new Date(now); d.setHours(h,m,0,0);
+    if(d<now)d.setDate(d.getDate()+1);
+    return Math.round((d-now)/60000);
+  }
+  function fmtCd(mins){
+    if(mins===null)return'—'; if(mins<=0)return'NOW'; if(mins===1)return'1 MIN'; return`${mins} MINS`;
+  }
+  function parseStatus(etd){
+    if(!etd||etd==='—')   return{cls:'unknown',  en:'—',            jp:'不明'};
+    if(etd==='On time')   return{cls:'on-time',   en:'ON TIME',      jp:'時刻通り'};
+    if(etd==='Cancelled') return{cls:'cancelled', en:'CANCELLED',    jp:'運休'};
+    return                      {cls:'delayed',   en:`EXP ${etd}`,   jp:'遅延'};
+  }
 
   // ── Render ─────────────────────────────────────────────────────────────────
-  function renderBoard(data) {
-    const body = document.getElementById('board-body');
-    const services = data.trainServices || [];
-
-    if (!services.length) {
-      body.innerHTML = `<div class="state-msg">
-        <div class="big">NO SERVICES</div>
-        No departures currently listed for WCP.
-      </div>`;
+  function renderBoard(data){
+    const body=document.getElementById('board-body');
+    const svcs=data.trainServices||[];
+    if(!svcs.length){
+      body.innerHTML=`<div class="state-msg"><div class="big">運行なし</div>No services currently listed for WCP.</div>`;
       return;
     }
-
-    const rows = services.map((svc, idx) => {
-      const dest    = svc.destination?.[0]?.locationName ?? '—';
-      const std     = svc.std ?? '—';
-      const etd     = svc.etd ?? '—';
-      const plat    = svc.platform ?? '—';
-      const op      = svc.operator ?? '—';
-      const mins    = minutesUntil(std);
-      const isNext  = idx === 0;
-
-      let statusClass = 'unknown', statusText = etd;
-      if (etd === 'On time')    { statusClass = 'on-time';   statusText = 'ON TIME'; }
-      else if (etd === 'Cancelled') { statusClass = 'cancelled'; statusText = 'CANCELLED'; }
-      else if (etd && etd !== '—')  { statusClass = 'delayed';   statusText = `EXP ${etd}`; }
-
-      const cdClass = mins === null ? 'gone'
-                    : mins <= SOON_MINS ? 'soon' : '';
-
-      return `<tr class="${isNext ? 'next' : ''}">
-        <td><span class="countdown ${cdClass}">${fmtCountdown(mins)}</span></td>
+    const rows=svcs.map((s,i)=>{
+      const dest=s.destination?.[0]?.locationName??'—';
+      const std=s.std??'—', etd=s.etd??'—', plat=s.platform??'—', op=s.operator??'—';
+      const mins=minutesUntil(std), st=parseStatus(etd);
+      const cdCls=mins===null?'gone':mins<=SOON_MINS?'soon':'';
+      return`<tr class="${i===0?'next':''}">
+        <td><span class="countdown ${cdCls}">${fmtCd(mins)}</span></td>
         <td>${std}</td>
         <td>${dest}</td>
-        <td><span class="${statusClass}">${statusText}</span></td>
+        <td><span class="${st.cls}">${st.en}</span><span class="status-jp ${st.cls}">${st.jp}</span></td>
         <td><span class="platform">${plat}</span></td>
-        <td style="color:var(--dim);font-size:0.72rem">${op}</td>
+        <td style="color:var(--dim);font-size:.7rem">${op}</td>
       </tr>`;
     }).join('');
 
-    body.innerHTML = `
-      <table class="dep-table">
-        <thead>
-          <tr>
-            <th>IN</th>
-            <th>DEPARTS</th>
-            <th>DESTINATION</th>
-            <th>STATUS</th>
-            <th>PLATFORM</th>
-            <th>OPERATOR</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>`;
+    body.innerHTML=`<table class="dep-table">
+      <thead><tr>
+        <th>IN<span class="jp">時間</span></th>
+        <th>DEPARTS<span class="jp">出発</span></th>
+        <th>DESTINATION<span class="jp">行先</span></th>
+        <th>STATUS<span class="jp">状態</span></th>
+        <th>PLATFORM<span class="jp">番線</span></th>
+        <th>OPERATOR<span class="jp">鉄道会社</span></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 
-    const now = new Date();
-    document.getElementById('last-updated').textContent =
-      `Last updated: ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const n=new Date();
+    document.getElementById('last-updated').textContent=`更新: ${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
   }
 
-  function renderError(err) {
-    const body = document.getElementById('board-body');
-    if (err.error === 'no_key') {
-      body.innerHTML = `<div class="state-msg">
-        <div class="big">API KEY REQUIRED</div>
-        Register free at
-        <a href="https://realtime.nationalrail.co.uk/OpenLDBWSRegistration/" target="_blank">
-          realtime.nationalrail.co.uk/OpenLDBWSRegistration
-        </a>
-        then add your key to <code>config.json</code>.
-      </div>`;
-    } else {
-      body.innerHTML = `<div class="state-msg">
-        <div class="big">ERROR</div>
-        ${err.message ?? 'Could not reach departure board API.'}
-      </div>`;
+  function renderError(err){
+    const body=document.getElementById('board-body');
+    if(err.error==='no_key'){
+      body.innerHTML=`<div class="state-msg">
+        <div class="big">APIキーが必要です</div>
+        Register free at <a href="https://realtime.nationalrail.co.uk/OpenLDBWSRegistration/" target="_blank">realtime.nationalrail.co.uk/OpenLDBWSRegistration</a>
+        then add your key to <code>config.json</code>.</div>`;
+    }else{
+      body.innerHTML=`<div class="state-msg"><div class="big">エラー ✖</div>${err.message??'Could not reach API.'}</div>`;
     }
   }
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
-  async function fetchDepartures() {
-    document.getElementById('poll-status').textContent = 'FETCHING';
-    try {
-      const res  = await fetch('/api/departures');
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        renderError(data);
-      } else {
-        renderBoard(data);
-      }
-      document.getElementById('poll-status').textContent = res.ok ? 'OK' : 'ERR';
-    } catch (e) {
-      renderError({ message: e.message });
-      document.getElementById('poll-status').textContent = 'ERR';
+  async function fetchDepartures(){
+    document.getElementById('poll-status').textContent='FETCHING';
+    try{
+      const res=await fetch('/api/departures');
+      const data=await res.json();
+      if(!res.ok||data.error) renderError(data);
+      else renderBoard(data);
+      document.getElementById('poll-status').textContent=res.ok&&!data.error?'OK':'ERR';
+    }catch(e){
+      renderError({message:e.message});
+      document.getElementById('poll-status').textContent='ERR';
     }
-    nextPollAt = Date.now() + POLL_MS;
+    nextPollAt=Date.now()+POLL_MS;
     updatePollBar();
   }
 
-  // ── Kick off ───────────────────────────────────────────────────────────────
   fetchDepartures();
-  setInterval(fetchDepartures, POLL_MS);
+  setInterval(fetchDepartures,POLL_MS);
 
-  // Update the countdown table column every 30 seconds
-  setInterval(() => {
-    document.querySelectorAll('.dep-table tbody tr').forEach((row, idx) => {
-      const stdCell = row.cells[1]?.textContent;
-      if (!stdCell) return;
-      const mins = minutesUntil(stdCell);
-      const cd   = row.cells[0]?.querySelector('.countdown');
-      if (!cd) return;
-      cd.textContent = fmtCountdown(mins);
-      cd.className   = 'countdown ' + (mins === null ? 'gone' : mins <= SOON_MINS ? 'soon' : '');
+  setInterval(()=>{
+    document.querySelectorAll('.dep-table tbody tr').forEach(row=>{
+      const std=row.cells[1]?.textContent;
+      const cd=row.cells[0]?.querySelector('.countdown');
+      if(!cd||!std)return;
+      const mins=minutesUntil(std);
+      cd.textContent=fmtCd(mins);
+      cd.className='countdown '+(mins===null?'gone':mins<=SOON_MINS?'soon':'');
     });
-  }, 30000);
+  },30000);
 </script>
-
 </body>
 </html>
