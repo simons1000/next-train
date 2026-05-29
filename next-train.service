@@ -1,0 +1,15 @@
+[Unit]
+Description=Next Train — Worcester Park departure board
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=simon
+WorkingDirectory=/home/simon/next_train
+ExecStart=/usr/bin/python3 /home/simon/next_train/server.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
