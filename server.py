@@ -24,18 +24,20 @@ class Handler(BaseHTTPRequestHandler):
 
         elif self.path == '/api/departures':
             cfg   = load_config()
-            crs   = cfg.get('station', 'WCP')
-            token = cfg.get('api_key', '')
-            rows  = cfg.get('rows', 10)
+            crs        = cfg.get('station', 'WCP')
+            token      = cfg.get('api_key', '')
+            rows       = cfg.get('rows', 10)
+            filter_crs = cfg.get('filter_crs', '')
 
-            url = f'{HUXLEY}/departures/{crs}/{rows}'
+            via = f'/to/{filter_crs}' if filter_crs else ''
+            url = f'{HUXLEY}/departures/{crs}{via}/{rows}'
             try:
                 req = urllib.request.Request(url, headers={'User-Agent': 'next-train/1.0'})
                 with urllib.request.urlopen(req, timeout=10) as r:
                     data = r.read()
             except urllib.error.HTTPError as e:
                 if e.code == 404:
-                    url = f'{HUXLEY}/departures/{crs}'
+                    url = f'{HUXLEY}/departures/{crs}{via}'
                     try:
                         req = urllib.request.Request(url, headers={'User-Agent': 'next-train/1.0'})
                         with urllib.request.urlopen(req, timeout=10) as r:
