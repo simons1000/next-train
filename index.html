@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>次の電車 // Worcester Park</title>
+  <title>Next Train // Worcester Park</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@300;400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
     :root {
       --pink:   #ff2d78;
@@ -101,7 +101,7 @@
       text-shadow: 0 0 24px rgba(255,45,120,0.55), 0 0 50px rgba(255,45,120,0.25);
     }
     .station-jp {
-      font-family: 'Noto Sans JP', sans-serif;
+      font-family: sans-serif;
       font-size: 0.9rem; color: var(--pink); letter-spacing: 0.12em;
       text-shadow: 0 0 10px var(--pink); margin-top: 0.25rem;
     }
@@ -129,7 +129,7 @@
       text-align: left;
     }
     .dep-table thead .jp {
-      font-family: 'Noto Sans JP', sans-serif;
+      font-family: sans-serif;
       font-size: 0.58rem; color: var(--dim); display: block; margin-top: 1px;
     }
     .dep-table td { padding: 0.6rem 0.9rem; border-bottom: 1px solid rgba(191,95,255,0.08); }
@@ -144,7 +144,7 @@
     .unknown   { color: var(--dim); }
 
     .status-jp {
-      font-family: 'Noto Sans JP', sans-serif;
+      font-family: sans-serif;
       font-size: 0.62rem; display: block; margin-top: 2px; opacity: 0.75;
     }
 
@@ -184,7 +184,7 @@
       border-top: 1px solid rgba(191,95,255,0.12);
       display: flex; justify-content: space-between; letter-spacing: 0.05em;
     }
-    .footer .jp { font-family: 'Noto Sans JP', sans-serif; color: rgba(255,45,120,0.5); }
+    .footer .jp { font-family: sans-serif; color: rgba(255,45,120,0.5); }
 
     .blink { animation: blink 1s step-end infinite; }
     @keyframes blink { 50%{opacity:0} }
@@ -198,14 +198,14 @@
 <div class="board">
 
   <div class="header">
-    <span class="title">▸ LIVE DEPARTURE BOARD &nbsp;//&nbsp; 時刻表</span>
+    <span class="title">▸ LIVE DEPARTURE BOARD</span>
     <span class="right" id="hdr-clock">--:--:--</span>
   </div>
 
   <div class="station-banner">
     <div>
       <div class="station-en glitch" data-text="WORCESTER PARK">WORCESTER PARK</div>
-      <div class="station-jp">ウスター パーク &nbsp;✦&nbsp; 出発案内</div>
+      <div class="station-jp">WORCESTER PARK &nbsp;✦&nbsp; DEPARTURES</div>
     </div>
     <div class="station-meta">
       CRS <span>WCP</span> &nbsp;·&nbsp; South Western Railway<br>
@@ -214,7 +214,7 @@
   </div>
 
   <div class="poll-bar">
-    <span class="label">次の更新</span>
+    <span class="label">NEXT UPDATE</span>
     <span class="cd" id="poll-countdown">5:00</span>
     <div class="track"><div class="fill" id="poll-fill" style="width:100%"></div></div>
     <span id="poll-status">IDLE</span>
@@ -222,14 +222,14 @@
 
   <div id="board-body">
     <div class="state-msg">
-      <div class="big">データを読み込み中<span class="blink">_</span></div>
+      <div class="big">LOADING<span class="blink">_</span></div>
       Loading departure board...
     </div>
   </div>
 
   <div class="footer">
-    <span>NATIONAL RAIL DARWIN / HUXLEY2 &nbsp;·&nbsp; 5 MIN POLL</span>
-    <span class="jp">電車の時刻表 ✦ Worcester Park</span>
+    <span>NATIONAL RAIL DARWIN / HUXLEY &nbsp;·&nbsp; 5 MIN POLL</span>
+    <span class="jp">Train departure board ✦ Worcester Park</span>
   </div>
 
 </div>
@@ -242,7 +242,7 @@
   (function(){
     const c = document.getElementById('rain');
     const x = c.getContext('2d');
-    const K = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789';
+    const K = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let cols, drops;
     function init(){ c.width=innerWidth; c.height=innerHeight; cols=Math.floor(c.width/18); drops=Array(cols).fill(1); }
     function draw(){
@@ -332,10 +332,10 @@
     if(mins===null)return'—'; if(mins<=0)return'NOW'; if(mins===1)return'1 MIN'; return`${mins} MINS`;
   }
   function parseStatus(etd){
-    if(!etd||etd==='—')   return{cls:'unknown',  en:'—',            jp:'不明'};
-    if(etd==='On time')   return{cls:'on-time',   en:'ON TIME',      jp:'時刻通り'};
-    if(etd==='Cancelled') return{cls:'cancelled', en:'CANCELLED',    jp:'運休'};
-    return                      {cls:'delayed',   en:`EXP ${etd}`,   jp:'遅延'};
+    if(!etd||etd==='—')   return{cls:'unknown',  en:'—',            jp:'UNKNOWN'};
+    if(etd==='On time')   return{cls:'on-time',   en:'ON TIME',      jp:'ON TIME'};
+    if(etd==='Cancelled') return{cls:'cancelled', en:'CANCELLED',    jp:'CANCELLED'};
+    return                      {cls:'delayed',   en:`EXP ${etd}`,   jp:`EXP ${etd}`};
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -343,7 +343,7 @@
     const body=document.getElementById('board-body');
     const svcs=data.trainServices||[];
     if(!svcs.length){
-      body.innerHTML=`<div class="state-msg"><div class="big">運行なし</div>No services currently listed for WCP.</div>`;
+      body.innerHTML=`<div class="state-msg"><div class="big">NO SERVICES</div>No services currently listed for WCP.</div>`;
       return;
     }
     const rows=svcs.map((s,i)=>{
@@ -363,29 +363,29 @@
 
     body.innerHTML=`<table class="dep-table">
       <thead><tr>
-        <th>IN<span class="jp">時間</span></th>
-        <th>DEPARTS<span class="jp">出発</span></th>
-        <th>DESTINATION<span class="jp">行先</span></th>
-        <th>STATUS<span class="jp">状態</span></th>
-        <th>PLATFORM<span class="jp">番線</span></th>
-        <th>OPERATOR<span class="jp">鉄道会社</span></th>
+        <th>IN</th>
+        <th>DEPARTS</th>
+        <th>DESTINATION</th>
+        <th>STATUS</th>
+        <th>PLATFORM</th>
+        <th>OPERATOR</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 
     const n=new Date();
-    document.getElementById('last-updated').textContent=`更新: ${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+    document.getElementById('last-updated').textContent=`Updated: ${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
   }
 
   function renderError(err){
     const body=document.getElementById('board-body');
     if(err.error==='no_key'){
       body.innerHTML=`<div class="state-msg">
-        <div class="big">APIキーが必要です</div>
+        <div class="big">API key required</div>
         Register free at <a href="https://realtime.nationalrail.co.uk/OpenLDBWSRegistration/" target="_blank">realtime.nationalrail.co.uk/OpenLDBWSRegistration</a>
         then add your key to <code>config.json</code>.</div>`;
     }else{
-      body.innerHTML=`<div class="state-msg"><div class="big">エラー ✖</div>${err.message??'Could not reach API.'}</div>`;
+      body.innerHTML=`<div class="state-msg"><div class="big">ERROR ✖</div>${err.message??'Could not reach API.'}</div>`;
     }
   }
 

@@ -6,7 +6,7 @@ import urllib.error
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 PORT = 8090
-HUXLEY = 'https://huxley2.azure-websites.net'
+HUXLEY = 'https://huxley2.azurewebsites.net'
 
 
 def load_config():
@@ -28,26 +28,38 @@ class Handler(BaseHTTPRequestHandler):
             token = cfg.get('api_key', '')
             rows  = cfg.get('rows', 10)
 
-            if not token or token == 'YOUR_DARWIN_API_KEY_HERE':
-                self._json({'error': 'no_key',
-                            'message': 'Darwin API key not configured in config.json'}, 503)
-                return
-
-            url = f'{HUXLEY}/departures/{crs}/{rows}?accessToken={token}'
+            url = f'{HUXLEY}/departures/{crs}/{rows}'
             try:
                 req = urllib.request.Request(url, headers={'User-Agent': 'next-train/1.0'})
                 with urllib.request.urlopen(req, timeout=10) as r:
                     data = r.read()
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.send_header('Content-Length', len(data))
-                self.end_headers()
-                self.wfile.write(data)
             except urllib.error.HTTPError as e:
-                self._json({'error': 'upstream_http', 'status': e.code,
-                            'message': str(e)}, 502)
+                if e.code == 404:
+                    url = f'{HUXLEY}/departures/{crs}'
+                    try:
+                        req = urllib.request.Request(url, headers={'User-Agent': 'next-train/1.0'})
+                        with urllib.request.urlopen(req, timeout=10) as r:
+                            data = r.read()
+                    except urllib.error.HTTPError as e2:
+                        self._json({'error': 'upstream_http', 'status': e2.code,
+                                    'message': str(e2)}, 502)
+                        return
+                    except Exception as e2:
+                        self._json({'error': 'upstream_error', 'message': str(e2)}, 502)
+                        return
+                else:
+                    self._json({'error': 'upstream_http', 'status': e.code,
+                                'message': str(e)}, 502)
+                    return
             except Exception as e:
                 self._json({'error': 'upstream_error', 'message': str(e)}, 502)
+                return
+
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', len(data))
+            self.end_headers()
+            self.wfile.write(data)
 
         else:
             self.send_error(404)
