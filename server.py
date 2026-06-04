@@ -14,6 +14,17 @@ def load_config():
         return json.load(f)
 
 
+def build_departures_url(crs, via_crs='', filter_crs='', rows=None):
+    url = f'{HUXLEY}/departures/{crs}'
+    if via_crs:
+        url += f'/to/{via_crs}'
+    if filter_crs:
+        url += f'/to/{filter_crs}'
+    if rows is not None:
+        url += f'/{rows}'
+    return url
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         print(fmt % args)
@@ -23,21 +34,23 @@ class Handler(BaseHTTPRequestHandler):
             self._file('index.html', 'text/html; charset=utf-8')
 
         elif self.path == '/api/departures':
-            cfg   = load_config()
+            cfg        = load_config()
             crs        = cfg.get('station', 'WCP')
             token      = cfg.get('api_key', '')
             rows       = cfg.get('rows', 10)
             filter_crs = cfg.get('filter_crs', '')
+            via_crs    = cfg.get('via_crs', '')
 
-            via = f'/to/{filter_crs}' if filter_crs else ''
-            url = f'{HUXLEY}/departures/{crs}{via}/{rows}'
+            url = build_departures_url(crs, via_crs=via_crs,
+                                       filter_crs=filter_crs, rows=rows)
             try:
                 req = urllib.request.Request(url, headers={'User-Agent': 'next-train/1.0'})
                 with urllib.request.urlopen(req, timeout=10) as r:
                     data = r.read()
             except urllib.error.HTTPError as e:
                 if e.code == 404:
-                    url = f'{HUXLEY}/departures/{crs}{via}'
+                    url = build_departures_url(crs, via_crs=via_crs,
+                                               filter_crs=filter_crs, rows=None)
                     try:
                         req = urllib.request.Request(url, headers={'User-Agent': 'next-train/1.0'})
                         with urllib.request.urlopen(req, timeout=10) as r:

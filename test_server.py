@@ -114,6 +114,14 @@ class TestUrlConstruction:
         urls = self._url_for({"filter_crs": "WAT"})
         assert urls == ["https://huxley2.azurewebsites.net/departures/WCP/to/WAT/10"]
 
+    def test_via_crs_included(self):
+        urls = self._url_for({"via_crs": "CLJ"})
+        assert urls == ["https://huxley2.azurewebsites.net/departures/WCP/to/CLJ/10"]
+
+    def test_via_and_filter_included(self):
+        urls = self._url_for({"via_crs": "CLJ", "filter_crs": "VIC"})
+        assert urls == ["https://huxley2.azurewebsites.net/departures/WCP/to/CLJ/to/VIC/10"]
+
     def test_custom_rows(self):
         urls = self._url_for({"rows": 5})
         assert urls == ["https://huxley2.azurewebsites.net/departures/WCP/5"]
@@ -203,6 +211,25 @@ class TestFourOhFourFallback:
             handler.do_GET()
 
         assert "/to/WAT" in calls[1]
+
+    def test_fallback_preserves_via_and_filter_crs(self):
+        calls = []
+        def fake_urlopen(req, timeout):
+            calls.append(req.full_url)
+            if len(calls) == 1:
+                raise self._make_http_error(404)
+            mock_resp = MagicMock()
+            mock_resp.read.return_value = json.dumps(SAMPLE_DEPARTURES).encode()
+            mock_resp.__enter__ = lambda s: mock_resp
+            mock_resp.__exit__ = MagicMock(return_value=False)
+            return mock_resp
+
+        handler, buf = make_handler()
+        with patch("server.load_config", return_value={"station": "WCP", "rows": 10, "via_crs": "CLJ", "filter_crs": "VIC"}), \
+             patch("urllib.request.urlopen", side_effect=fake_urlopen):
+            handler.do_GET()
+
+        assert "/to/CLJ/to/VIC" in calls[1]
 
     def test_non_404_does_not_retry(self):
         calls = []
