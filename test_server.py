@@ -120,7 +120,7 @@ class TestUrlConstruction:
 
     def test_via_and_filter_included(self):
         urls = self._url_for({"via_crs": "CLJ", "filter_crs": "VIC"})
-        assert urls == ["https://huxley2.azurewebsites.net/departures/WCP/to/CLJ/to/VIC/10"]
+        assert urls == ["https://huxley2.azurewebsites.net/departures/WCP/to/VIC/10?via=CLJ"]
 
     def test_custom_rows(self):
         urls = self._url_for({"rows": 5})
@@ -146,6 +146,34 @@ class TestDeparturesSuccess:
              patch("urllib.request.urlopen", return_value=mock_response):
             handler.do_GET()
 
+        status, body = parse_response(buf)
+        assert status == 200
+        assert body["crs"] == "WCP"
+        assert len(body["trainServices"]) == 1
+
+    def test_falls_back_to_via_station_when_target_empty(self):
+        direct_payload = json.dumps({"trainServices": None}).encode()
+        via_payload = json.dumps(SAMPLE_DEPARTURES).encode()
+        mock_response = MagicMock()
+        mock_response.__enter__ = lambda s: mock_response
+        mock_response.__exit__ = MagicMock(return_value=False)
+
+        calls = []
+        def fake_urlopen(req, timeout):
+            calls.append(req.full_url)
+            if len(calls) == 1:
+                mock_response.read.return_value = direct_payload
+            else:
+                mock_response.read.return_value = via_payload
+            return mock_response
+
+        handler, buf = make_handler()
+        with patch("server.load_config", return_value={"station": "WCP", "rows": 10, "via_crs": "CLJ", "filter_crs": "VIC"}), \
+             patch("urllib.request.urlopen", side_effect=fake_urlopen):
+            handler.do_GET()
+
+        assert calls[0].endswith("/to/VIC/10?via=CLJ")
+        assert calls[1].endswith("/to/CLJ/10")
         status, body = parse_response(buf)
         assert status == 200
         assert body["crs"] == "WCP"
@@ -229,7 +257,8 @@ class TestFourOhFourFallback:
              patch("urllib.request.urlopen", side_effect=fake_urlopen):
             handler.do_GET()
 
-        assert "/to/CLJ/to/VIC" in calls[1]
+        assert "/to/VIC/10?via=CLJ" in calls[0]
+        assert "/to/VIC?via=CLJ" in calls[1]
 
     def test_non_404_does_not_retry(self):
         calls = []

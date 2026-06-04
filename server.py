@@ -5,7 +5,7 @@ import urllib.request
 import urllib.error
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-PORT = 8090
+PORT = 8190
 HUXLEY = 'https://huxley2.azurewebsites.net'
 
 
@@ -16,12 +16,14 @@ def load_config():
 
 def build_departures_url(crs, via_crs='', filter_crs='', rows=None):
     url = f'{HUXLEY}/departures/{crs}'
-    if via_crs:
-        url += f'/to/{via_crs}'
     if filter_crs:
         url += f'/to/{filter_crs}'
+    elif via_crs:
+        url += f'/to/{via_crs}'
     if rows is not None:
         url += f'/{rows}'
+    if filter_crs and via_crs:
+        url += f'?via={via_crs}'
     return url
 
 
@@ -69,6 +71,21 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._json({'error': 'upstream_error', 'message': str(e)}, 502)
                 return
+
+            if via_crs and filter_crs:
+                try:
+                    payload = json.loads(data)
+                except json.JSONDecodeError:
+                    payload = None
+
+                if payload and payload.get('trainServices') is None:
+                    fallback_url = build_departures_url(crs, via_crs=via_crs, rows=rows)
+                    try:
+                        req = urllib.request.Request(fallback_url, headers={'User-Agent': 'next-train/1.0'})
+                        with urllib.request.urlopen(req, timeout=10) as r:
+                            data = r.read()
+                    except Exception:
+                        pass
 
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
