@@ -168,39 +168,75 @@
     .dep-table td { padding: 0.6rem 0.9rem; border-bottom: 1px solid rgba(191,95,255,0.08); }
     .dep-table tbody tr:hover { background: rgba(191,95,255,0.05); }
     .dep-table tbody tr.next td {
+      position: relative;
       background: linear-gradient(90deg,
-        rgba(255,45,120,0.20) 0%,
-        rgba(191,95,255,0.10) 55%,
-        rgba(0,240,255,0.05) 100%);
-      background-size: 200% 100%;
-      animation: next-shimmer 3.5s ease-in-out infinite;
-      border-top: 1px solid rgba(255,45,120,0.45);
-      border-bottom: 1px solid rgba(255,45,120,0.25);
-      text-shadow: 0 0 12px rgba(255,45,120,0.55);
+        rgba(255,45,120,0.32) 0%,
+        rgba(191,95,255,0.18) 50%,
+        rgba(0,240,255,0.12) 100%);
+      background-size: 250% 100%;
+      animation: next-shimmer 2s ease-in-out infinite;
+      border-top: 1px solid rgba(255,45,120,0.85);
+      border-bottom: 1px solid rgba(255,45,120,0.55);
+      box-shadow: 0 -3px 20px rgba(255,45,120,0.45), 0 3px 20px rgba(255,45,120,0.3);
+      text-shadow: 0 0 16px rgba(255,45,120,0.85), 0 0 32px rgba(255,45,120,0.4);
     }
     @keyframes next-shimmer {
       0%, 100% { background-position: 0% 0%; }
       50%       { background-position: 100% 0%; }
     }
     .dep-table tbody tr.next td:first-child {
-      border-left: 3px solid var(--pink);
-      box-shadow: inset 14px 0 30px rgba(255,45,120,0.22);
+      border-left: 5px solid var(--pink);
+      box-shadow:
+        inset 24px 0 60px rgba(255,45,120,0.45),
+        0 -3px 20px rgba(255,45,120,0.45),
+        0 3px 20px rgba(255,45,120,0.3);
     }
     .dep-table tbody tr.next td:first-child::before {
-      content: '▶';
+      content: '▶▶';
       color: var(--pink);
-      font-size: 0.55rem;
-      margin-right: 0.45rem;
+      font-size: 0.62rem;
+      letter-spacing: -0.05em;
+      margin-right: 0.5rem;
       vertical-align: middle;
-      text-shadow: 0 0 8px var(--pink), 0 0 20px var(--pink);
-      animation: pulse 1.4s ease-in-out infinite;
+      text-shadow: 0 0 6px var(--pink), 0 0 18px var(--pink), 0 0 36px var(--pink);
+      animation: next-arrow 0.9s ease-in-out infinite;
       display: inline-block;
     }
+    .dep-table tbody tr.next td:first-child::after {
+      content: '次の列車';
+      display: block;
+      font-family: sans-serif;
+      font-size: 0.42rem;
+      letter-spacing: 0.2em;
+      color: rgba(255,45,120,0.65);
+      text-shadow: 0 0 8px var(--pink);
+      margin-top: 3px;
+      animation: blink 2s step-end infinite;
+    }
+    @keyframes next-arrow {
+      0%, 100% { transform: translateX(0);   opacity: 1; }
+      50%       { transform: translateX(5px); opacity: 0.4; }
+    }
     .dep-table tbody tr.next .countdown {
-      font-size: 1.22rem;
+      font-size: 1.5rem;
       color: var(--pink);
-      text-shadow: 0 0 18px var(--pink), 0 0 40px rgba(255,45,120,0.5);
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
+      animation: next-cd-glow 1.6s ease-in-out infinite;
+    }
+    @keyframes next-cd-glow {
+      0%, 100% {
+        text-shadow:
+          0 0 10px var(--pink),
+          0 0 28px var(--pink),
+          0 0 55px rgba(255,45,120,0.6);
+      }
+      50% {
+        text-shadow:
+          0 0 18px var(--pink),
+          0 0 48px var(--pink),
+          0 0 90px rgba(255,45,120,0.8),
+          0 0 150px rgba(255,45,120,0.35);
+      }
     }
 
     .on-time   { color: var(--green); text-shadow: 0 0 8px var(--green); }
