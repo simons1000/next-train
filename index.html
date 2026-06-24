@@ -198,6 +198,8 @@
     }
     .dep-table tbody tr.next .countdown {
       font-size: 1.22rem;
+      color: var(--pink);
+      text-shadow: 0 0 18px var(--pink), 0 0 40px rgba(255,45,120,0.5);
       letter-spacing: 0.06em;
     }
 
@@ -440,11 +442,10 @@
       const std=s.std??'—', etd=s.etd??'—', plat=s.platform??'—', op=s.operator??'—';
       const eff=etd==='Cancelled'?'—':(etd&&etd!=='—'&&etd!=='On time')?etd:std;
       const mins=minutesUntil(eff), st=parseStatus(etd);
-      const statusCls=(st.cls==='on-time'||st.cls==='delayed')?st.cls:'';
-      const cdCls=[mins===null?'gone':mins<=SOON_MINS?'soon':'',statusCls].filter(Boolean).join(' ');
-      return`<tr class="${i===nextIdx?'next':''}" data-eff="${eff}" data-status="${statusCls}">
+      const cdCls=mins===null?'gone':mins<=SOON_MINS?'soon':'';
+      return`<tr class="${i===nextIdx?'next':''}" data-eff="${eff}">
         <td><span class="countdown ${cdCls}">${fmtCd(mins)}</span></td>
-        <td>${std}</td>
+        <td><span class="${st.cls}">${std}</span></td>
         <td>${dest}</td>
         <td><span class="${st.cls}">${st.en}</span><span class="status-jp ${st.cls}">${st.jp}</span></td>
         <td><span class="platform">${plat}</span></td>
@@ -500,9 +501,8 @@
       const cd=row.cells[0]?.querySelector('.countdown');
       if(!cd||!eff)return;
       const mins=minutesUntil(eff);
-      const status=row.dataset.status||'';
       cd.textContent=fmtCd(mins);
-      cd.className=['countdown',mins===null?'gone':mins<=SOON_MINS?'soon':'',status].filter(Boolean).join(' ');
+      cd.className='countdown '+(mins===null?'gone':mins<=SOON_MINS?'soon':'');
     });
   },30000);
 </script>
