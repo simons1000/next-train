@@ -40,7 +40,11 @@ class Handler(BaseHTTPRequestHandler):
             self._file('index.html', 'text/html; charset=utf-8')
 
         elif self.path == '/api/departures':
-            cfg        = load_config()
+            try:
+                cfg = load_config()
+            except (OSError, json.JSONDecodeError) as e:
+                self._json({'error': 'config_error', 'message': str(e)}, 500)
+                return
             crs        = cfg.get('station', 'WCP')
             rows       = cfg.get('rows', 10)
             filter_crs = cfg.get('filter_crs', '')
@@ -80,22 +84,24 @@ class Handler(BaseHTTPRequestHandler):
                     self._json({'error': 'upstream_error', 'message': str(e)}, 502)
                     return
 
+                cache_this = True
                 if via_crs and filter_crs:
                     try:
                         payload = json.loads(data)
                     except json.JSONDecodeError:
                         payload = None
 
-                    if payload and payload.get('trainServices') is None:
+                    if payload and not payload.get('trainServices'):
                         fallback_url = build_departures_url(crs, via_crs=via_crs, rows=rows)
                         try:
                             req = urllib.request.Request(fallback_url, headers={'User-Agent': 'next-train/1.0'})
                             with urllib.request.urlopen(req, timeout=10) as r:
                                 data = r.read()
                         except Exception:
-                            pass
+                            cache_this = False
 
-                _cache.update({'data': data, 'key': cache_key, 'ts': now})
+                if cache_this:
+                    _cache.update({'data': data, 'key': cache_key, 'ts': now})
 
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')

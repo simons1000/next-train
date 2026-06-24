@@ -2,6 +2,5 @@
   "station": "WCP",
   "via_crs": "CLJ",
   "filter_crs": "VIC",
-  "api_key": "YOUR_DARWIN_API_KEY_HERE",
   "rows": 10
 }

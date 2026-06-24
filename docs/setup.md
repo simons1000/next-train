@@ -5,7 +5,6 @@ This guide explains how to set up the Next Train application on the remote host.
 ## Prerequisites
 
 - Python 3.13 or newer
-- A valid Darwin/OpenLDBWS API key
 - Access to the repository at `/home/simon/next_train`
 
 ## Install dependencies
@@ -30,7 +29,6 @@ Example config for WCP -> CLJ -> VIC:
   "station": "WCP",
   "via_crs": "CLJ",
   "filter_crs": "VIC",
-  "api_key": "YOUR_DARWIN_API_KEY_HERE",
   "rows": 10
 }
 ```

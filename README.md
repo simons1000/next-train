@@ -13,7 +13,6 @@ Next Train is a small Python backend and frontend for displaying departures from
 
 - Python 3.13+
 - `requests` is not required; the app uses standard library HTTP clients
-- A valid Darwin API key for `config.json`
 
 ## Configuration
 
@@ -26,7 +25,6 @@ Example configuration for WCP -> CLJ -> VIC:
   "station": "WCP",
   "via_crs": "CLJ",
   "filter_crs": "VIC",
-  "api_key": "YOUR_DARWIN_API_KEY_HERE",
   "rows": 10
 }
 ```
@@ -34,7 +32,6 @@ Example configuration for WCP -> CLJ -> VIC:
 - `station`: departure station code (default `WCP`)
 - `via_crs`: optional intermediate station code (e.g. `CLJ`)
 - `filter_crs`: optional final destination station code (e.g. `VIC`)
-- `api_key`: Darwin/OpenLDBWS API key
 - `rows`: number of departures to request
 
 ## Running locally
