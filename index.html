@@ -408,7 +408,7 @@
     const rows=svcs.map((s,i)=>{
       const dest=s.destination?.[0]?.locationName??'—';
       const std=s.std??'—', etd=s.etd??'—', plat=s.platform??'—', op=s.operator??'—';
-      const eff=(etd&&etd!=='—'&&etd!=='On time'&&etd!=='Cancelled')?etd:std;
+      const eff=etd==='Cancelled'?'—':(etd&&etd!=='—'&&etd!=='On time')?etd:std;
       const mins=minutesUntil(eff), st=parseStatus(etd);
       const cdCls=mins===null?'gone':mins<=SOON_MINS?'soon':'';
       return`<tr class="${i===nextIdx?'next':''}" data-eff="${eff}">
