@@ -108,6 +108,39 @@
     .station-meta { font-size: 0.68rem; color: var(--dim); text-align: right; line-height: 1.7; }
     .station-meta span { color: var(--purple); }
 
+    /* NRCC alert ticker */
+    .nrcc-banner {
+      display: none;
+      border-bottom: 1px solid rgba(255,204,68,0.28);
+      background: rgba(255,204,68,0.04);
+      padding: 0.3rem 0;
+      align-items: center;
+    }
+    .nrcc-banner.visible { display: flex; }
+    .nrcc-label {
+      flex-shrink: 0;
+      padding: 0 1rem;
+      font-size: 0.64rem;
+      letter-spacing: 0.1em;
+      color: var(--amber);
+      text-shadow: 0 0 8px var(--amber);
+      border-right: 1px solid rgba(255,204,68,0.2);
+    }
+    .nrcc-track { flex: 1; overflow: hidden; }
+    .nrcc-scroll {
+      display: inline-block;
+      white-space: nowrap;
+      color: var(--amber);
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 6px rgba(255,204,68,0.3);
+      animation: nrcc-scroll 30s linear infinite;
+    }
+    @keyframes nrcc-scroll {
+      from { transform: translateX(100vw); }
+      to   { transform: translateX(-100%); }
+    }
+
     /* Poll bar */
     .poll-bar {
       padding: 0.38rem 1.2rem; font-size: 0.66rem; color: var(--dim);
@@ -211,6 +244,11 @@
       CRS <span>WCP</span> &nbsp;·&nbsp; South Western Railway<br>
       <span id="last-updated">—</span>
     </div>
+  </div>
+
+  <div id="nrcc-banner" class="nrcc-banner">
+    <span class="nrcc-label">⚡ ALERT</span>
+    <div class="nrcc-track"><span id="nrcc-scroll" class="nrcc-scroll"></span></div>
   </div>
 
   <div class="poll-bar">
@@ -325,7 +363,6 @@
     if(!t||t==='—')return null;
     const now=new Date(),[h,m]=t.split(':').map(Number);
     let d=new Date(now); d.setHours(h,m,0,0);
-    if(d<now)d.setDate(d.getDate()+1);
     return Math.round((d-now)/60000);
   }
   function fmtCd(mins){
@@ -338,20 +375,43 @@
     return                      {cls:'delayed',   en:`EXP ${etd}`,   jp:`EXP ${etd}`};
   }
 
+  // ── NRCC messages ──────────────────────────────────────────────────────────
+  function stripHtml(html){
+    return html.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+  }
+  let _nrccText='';
+  function renderNrcc(messages){
+    const banner=document.getElementById('nrcc-banner');
+    if(!messages||!messages.length){ banner.classList.remove('visible'); _nrccText=''; return; }
+    const text=messages
+      .map(m=>typeof m==='string'?m:m.value||'')
+      .map(stripHtml).filter(Boolean).join('  ✦  ');
+    if(!text){ banner.classList.remove('visible'); _nrccText=''; return; }
+    if(text===_nrccText) return;
+    _nrccText=text;
+    const el=document.getElementById('nrcc-scroll');
+    el.textContent=text;
+    el.style.animationDuration=Math.max(15,text.length/12)+'s';
+    banner.classList.add('visible');
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
   function renderBoard(data){
+    renderNrcc(data.nrccMessages);
     const body=document.getElementById('board-body');
     const svcs=data.trainServices||[];
     if(!svcs.length){
       body.innerHTML=`<div class="state-msg"><div class="big">NO SERVICES</div>No services currently listed for WCP.</div>`;
       return;
     }
+    const nextIdx=svcs.findIndex(s=>(s.etd??'')!=='Cancelled');
     const rows=svcs.map((s,i)=>{
       const dest=s.destination?.[0]?.locationName??'—';
       const std=s.std??'—', etd=s.etd??'—', plat=s.platform??'—', op=s.operator??'—';
-      const mins=minutesUntil(std), st=parseStatus(etd);
+      const eff=(etd&&etd!=='—'&&etd!=='On time'&&etd!=='Cancelled')?etd:std;
+      const mins=minutesUntil(eff), st=parseStatus(etd);
       const cdCls=mins===null?'gone':mins<=SOON_MINS?'soon':'';
-      return`<tr class="${i===0?'next':''}">
+      return`<tr class="${i===nextIdx?'next':''}" data-eff="${eff}">
         <td><span class="countdown ${cdCls}">${fmtCd(mins)}</span></td>
         <td>${std}</td>
         <td>${dest}</td>
@@ -378,15 +438,9 @@
   }
 
   function renderError(err){
+    renderNrcc(null);
     const body=document.getElementById('board-body');
-    if(err.error==='no_key'){
-      body.innerHTML=`<div class="state-msg">
-        <div class="big">API key required</div>
-        Register free at <a href="https://realtime.nationalrail.co.uk/OpenLDBWSRegistration/" target="_blank">realtime.nationalrail.co.uk/OpenLDBWSRegistration</a>
-        then add your key to <code>config.json</code>.</div>`;
-    }else{
-      body.innerHTML=`<div class="state-msg"><div class="big">ERROR ✖</div>${err.message??'Could not reach API.'}</div>`;
-    }
+    body.innerHTML=`<div class="state-msg"><div class="big">ERROR ✖</div>${err.message??'Could not reach API.'}</div>`;
   }
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
@@ -411,10 +465,10 @@
 
   setInterval(()=>{
     document.querySelectorAll('.dep-table tbody tr').forEach(row=>{
-      const std=row.cells[1]?.textContent;
+      const eff=row.dataset.eff||row.cells[1]?.textContent;
       const cd=row.cells[0]?.querySelector('.countdown');
-      if(!cd||!std)return;
-      const mins=minutesUntil(std);
+      if(!cd||!eff)return;
+      const mins=minutesUntil(eff);
       cd.textContent=fmtCd(mins);
       cd.className='countdown '+(mins===null?'gone':mins<=SOON_MINS?'soon':'');
     });

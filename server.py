@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 import json
 import os
+import time
 import urllib.request
 import urllib.error
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 PORT = 8190
 HUXLEY = 'https://huxley2.azurewebsites.net'
+CACHE_TTL = 60
+
+_cache = {'data': None, 'key': None, 'ts': 0}
 
 
 def load_config():
@@ -38,54 +42,60 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == '/api/departures':
             cfg        = load_config()
             crs        = cfg.get('station', 'WCP')
-            token      = cfg.get('api_key', '')
             rows       = cfg.get('rows', 10)
             filter_crs = cfg.get('filter_crs', '')
             via_crs    = cfg.get('via_crs', '')
 
-            url = build_departures_url(crs, via_crs=via_crs,
-                                       filter_crs=filter_crs, rows=rows)
-            try:
-                req = urllib.request.Request(url, headers={'User-Agent': 'next-train/1.0'})
-                with urllib.request.urlopen(req, timeout=10) as r:
-                    data = r.read()
-            except urllib.error.HTTPError as e:
-                if e.code == 404:
-                    url = build_departures_url(crs, via_crs=via_crs,
-                                               filter_crs=filter_crs, rows=None)
-                    try:
-                        req = urllib.request.Request(url, headers={'User-Agent': 'next-train/1.0'})
-                        with urllib.request.urlopen(req, timeout=10) as r:
-                            data = r.read()
-                    except urllib.error.HTTPError as e2:
-                        self._json({'error': 'upstream_http', 'status': e2.code,
-                                    'message': str(e2)}, 502)
-                        return
-                    except Exception as e2:
-                        self._json({'error': 'upstream_error', 'message': str(e2)}, 502)
-                        return
-                else:
-                    self._json({'error': 'upstream_http', 'status': e.code,
-                                'message': str(e)}, 502)
-                    return
-            except Exception as e:
-                self._json({'error': 'upstream_error', 'message': str(e)}, 502)
-                return
-
-            if via_crs and filter_crs:
+            cache_key = f"{crs}:{via_crs}:{filter_crs}:{rows}"
+            now = time.time()
+            if _cache['key'] == cache_key and now - _cache['ts'] < CACHE_TTL:
+                data = _cache['data']
+            else:
+                url = build_departures_url(crs, via_crs=via_crs,
+                                           filter_crs=filter_crs, rows=rows)
                 try:
-                    payload = json.loads(data)
-                except json.JSONDecodeError:
-                    payload = None
+                    req = urllib.request.Request(url, headers={'User-Agent': 'next-train/1.0'})
+                    with urllib.request.urlopen(req, timeout=10) as r:
+                        data = r.read()
+                except urllib.error.HTTPError as e:
+                    if e.code == 404:
+                        url = build_departures_url(crs, via_crs=via_crs,
+                                                   filter_crs=filter_crs, rows=None)
+                        try:
+                            req = urllib.request.Request(url, headers={'User-Agent': 'next-train/1.0'})
+                            with urllib.request.urlopen(req, timeout=10) as r:
+                                data = r.read()
+                        except urllib.error.HTTPError as e2:
+                            self._json({'error': 'upstream_http', 'status': e2.code,
+                                        'message': str(e2)}, 502)
+                            return
+                        except Exception as e2:
+                            self._json({'error': 'upstream_error', 'message': str(e2)}, 502)
+                            return
+                    else:
+                        self._json({'error': 'upstream_http', 'status': e.code,
+                                    'message': str(e)}, 502)
+                        return
+                except Exception as e:
+                    self._json({'error': 'upstream_error', 'message': str(e)}, 502)
+                    return
 
-                if payload and payload.get('trainServices') is None:
-                    fallback_url = build_departures_url(crs, via_crs=via_crs, rows=rows)
+                if via_crs and filter_crs:
                     try:
-                        req = urllib.request.Request(fallback_url, headers={'User-Agent': 'next-train/1.0'})
-                        with urllib.request.urlopen(req, timeout=10) as r:
-                            data = r.read()
-                    except Exception:
-                        pass
+                        payload = json.loads(data)
+                    except json.JSONDecodeError:
+                        payload = None
+
+                    if payload and payload.get('trainServices') is None:
+                        fallback_url = build_departures_url(crs, via_crs=via_crs, rows=rows)
+                        try:
+                            req = urllib.request.Request(fallback_url, headers={'User-Agent': 'next-train/1.0'})
+                            with urllib.request.urlopen(req, timeout=10) as r:
+                                data = r.read()
+                        except Exception:
+                            pass
+
+                _cache.update({'data': data, 'key': cache_key, 'ts': now})
 
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
