@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Next Train // Worcester Park</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
@@ -289,6 +291,51 @@
 
     .blink { animation: blink 1s step-end infinite; }
     @keyframes blink { 50%{opacity:0} }
+
+    @media (max-width: 600px) {
+      body {
+        padding-top:    max(0.75rem, env(safe-area-inset-top));
+        padding-bottom: max(1rem,    env(safe-area-inset-bottom));
+        padding-left:   0;
+        padding-right:  0;
+      }
+
+      /* Full-width, no overflowing decorations */
+      .board { width: 100%; }
+      .board::before, .board::after { content: none; }
+
+      .header { font-size: 0.6rem; padding: 0.28rem 0.75rem; }
+
+      /* Compact the station banner — drop the JP subtitle that wraps */
+      .station-banner { padding: 0.55rem 0.75rem; }
+      .station-en  { font-size: 1.15rem; }
+      .station-jp  { display: none; }
+      .station-meta { font-size: 0.57rem; text-align: left; }
+
+      .poll-bar { padding: 0.25rem 0.75rem; font-size: 0.6rem; }
+
+      /* Hide JP sub-labels inside table rows */
+      .status-jp { display: none; }
+
+      /* Fixed 4-column layout: IN | DEPARTS | DESTINATION | STATUS */
+      .dep-table { font-size: 0.76rem; table-layout: fixed; width: 100%; }
+      .dep-table thead th { padding: 0.3rem 0.45rem; font-size: 0.58rem; }
+      .dep-table td       { padding: 0.5rem 0.45rem;  overflow: hidden; }
+
+      .dep-table th:nth-child(1), .dep-table td:nth-child(1) { width: 22%; white-space: nowrap; }
+      .dep-table th:nth-child(2), .dep-table td:nth-child(2) { width: 16%; }
+      .dep-table th:nth-child(3), .dep-table td:nth-child(3) { width: 38%; white-space: nowrap; text-overflow: ellipsis; }
+      .dep-table th:nth-child(4), .dep-table td:nth-child(4) { width: 24%; }
+
+      /* Hide platform + operator */
+      .dep-table th:nth-child(n+5),
+      .dep-table td:nth-child(n+5) { display: none; }
+
+      /* Next-train row: keep the glow, drop the arrows and kanji that bloat the cell */
+      .dep-table tbody tr.next .countdown { font-size: 0.9rem; }
+      .dep-table tbody tr.next td:first-child::before,
+      .dep-table tbody tr.next td:first-child::after { content: none; }
+    }
   </style>
 </head>
 <body>
@@ -431,8 +478,10 @@
     if(!t||t==='—')return null;
     const now=new Date(),[h,m]=t.split(':').map(Number);
     let d=new Date(now); d.setHours(h,m,0,0);
+    if(d<now)d.setDate(d.getDate()+1);
     return Math.round((d-now)/60000);
   }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function fmtCd(mins){
     if(mins===null)return'—'; if(mins<=0)return'NOW'; if(mins===1)return'1 MIN'; return`${mins} MINS`;
   }
@@ -459,6 +508,9 @@
     _nrccText=text;
     const el=document.getElementById('nrcc-scroll');
     el.textContent=text;
+    el.style.animation='none';
+    void el.offsetWidth;
+    el.style.animation='';
     el.style.animationDuration=Math.max(15,text.length/12)+'s';
     banner.classList.add('visible');
   }
@@ -482,10 +534,10 @@
       return`<tr class="${i===nextIdx?'next':''}" data-eff="${eff}">
         <td><span class="countdown ${cdCls}">${fmtCd(mins)}</span></td>
         <td><span class="${st.cls}">${std}</span></td>
-        <td>${dest}</td>
+        <td>${esc(dest)}</td>
         <td><span class="${st.cls}">${st.en}</span><span class="status-jp ${st.cls}">${st.jp}</span></td>
-        <td><span class="platform">${plat}</span></td>
-        <td style="color:var(--dim);font-size:.7rem">${op}</td>
+        <td><span class="platform">${esc(plat)}</span></td>
+        <td style="color:var(--dim);font-size:.7rem">${esc(op)}</td>
       </tr>`;
     }).join('');
 
@@ -508,7 +560,7 @@
   function renderError(err){
     renderNrcc(null);
     const body=document.getElementById('board-body');
-    body.innerHTML=`<div class="state-msg"><div class="big">ERROR ✖</div>${err.message??'Could not reach API.'}</div>`;
+    body.innerHTML=`<div class="state-msg"><div class="big">ERROR ✖</div>${esc(err.message??'Could not reach API.')}</div>`;
   }
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
