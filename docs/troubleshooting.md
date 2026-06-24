@@ -59,7 +59,7 @@ If the page shows an API key error, make sure `config.json` contains a valid `ap
 ### Verify the configuration file
 
 ```bash
-cat /home/simon/next_train/config.json
+cat /home/simon/projects/next_train/config.json
 ```
 
 Required fields:

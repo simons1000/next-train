@@ -5,14 +5,14 @@ This guide explains how to set up the Next Train application on the remote host.
 ## Prerequisites
 
 - Python 3.13 or newer
-- Access to the repository at `/home/simon/next_train`
+- Access to the repository at `/home/simon/projects/next_train`
 
 ## Install dependencies
 
 From the repository root:
 
 ```bash
-cd /home/simon/next_train
+cd /home/simon/projects/next_train
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
@@ -66,6 +66,6 @@ sudo systemctl status next-train.service
 
 ## Notes
 
-- The service runs from `/home/simon/next_train`
-- The systemd unit uses `/home/simon/next_train/.venv/bin/python3`
+- The service runs from `/home/simon/projects/next_train`
+- The systemd unit uses `/home/simon/projects/next_train/.venv/bin/python3`
 - The app listens on port `8190`

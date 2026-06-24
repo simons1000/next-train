@@ -6,9 +6,9 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=simon
-WorkingDirectory=/home/simon/next_train
+WorkingDirectory=/home/simon/projects/next_train
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/home/simon/next_train/.venv/bin/python3 /home/simon/next_train/server.py
+ExecStart=/home/simon/projects/next_train/.venv/bin/python3 /home/simon/projects/next_train/server.py
 Restart=on-failure
 RestartSec=5
 
